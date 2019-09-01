@@ -1,0 +1,85 @@
+variables:
+  FOLDERNAME: ""  #for example: nomni/
+  SERVICE_NAME: go-api-test1 #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
+  GITLABWITCH: "-c msl" # msl srx srx-msl,for example: srx-msl:git on https://gitlab.srxcloud.com and images in https://ci.p2shop.com.cn
+  GOBUILDER: pangpanglabs/golang:builder-beta
+  WORKDIR: $FOLDERNAME$CI_PROJECT_NAME
+  GOTEST_REGISTRY: golang:1.12-alpine
+
+stages:
+  - build
+  - test
+job1:
+  stage: build
+  tags:
+    - golang-build
+  script:
+    - >
+      docker run --rm 
+      -v $(pwd):/go/src/$WORKDIR
+      -w /go/src/$WORKDIR
+      -e CGO_ENABLED=0
+      $GOBUILDER
+      sh -c '
+      govendor init && 
+      govendor add +e &&
+      chmod -Rf 777 vendor'
+  artifacts:
+    paths:
+      - vendor/
+  only:
+    - merge_requests
+
+job2: 
+  stage: test
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    PRIVATE_REGISTRY: registry.elandsystems.cn:5000
+    GO_REGISTRY: $PRIVATE_REGISTRY/$GOTEST_REGISTRY
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    P2SHOP_REGISTRY: registry.p2shop.com.cn
+    GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+    VENDOR_REGISTRY: $PRIVATE_REGISTRY/$CI_PROJECT_NAME-vendor
+  before_script:
+    - docker login -u eland -p 1234 $PRIVATE_REGISTRY
+    - docker login -u eland -p ****** $P2SHOP_REGISTRY
+  image:
+    name: $PRIVATE_REGISTRY/compose:1.24.1
+    entrypoint: [""]
+  services:
+    - name: $PRIVATE_REGISTRY/docker:19.03.1-dind
+      command: ["--insecure-registry=registry.elandsystems.cn:5000"]
+      alias: docker
+  tags:
+    - golang-test
+  script:
+   # current pwd:/builds/0/xiao.xinmiao/go-api-test1/
+   - cd ..
+   # 1.run rtc
+   - docker create -it --name rtc $P2SHOP_REGISTRY/run-test-container-qa sh
+   - docker cp rtc:/go/bin/run-test-container $(pwd)
+   - docker rm -f rtc
+   - ./run-test-container run --deploy-mode --no-login  $SERVICE_NAME $GITLABWITCH --registry-common $PRIVATE_REGISTRY
+   # 2.make vendor file
+   - rm -f -r vendor
+   - mkdir -p vendor
+   - mv $(pwd)/$CI_PROJECT_NAME/vendor/* $(pwd)/vendor/  # for fix vendor issue: cannot find package "github.com/labstack/echo/v4"
+   - docker ps -a
+   # 3. go build && test
+   - >
+     docker run --rm  --network=host 
+     -v $(pwd)/vendor:/go/src 
+     -v $(pwd)/$CI_PROJECT_NAME:/go/src/$WORKDIR 
+     -w /go/src/$WORKDIR
+     -e APP_ENV=
+     -e JWT_SECRET=1234
+     -e CGO_ENABLED=0
+     -m 800M
+     $GO_REGISTRY 
+     sh -c '
+     go test -p 1 -count 1 -v -coverpkg=./... -coverprofile coverage.out ./... &&
+     go tool cover -func=coverage.out'
+  coverage: '/\(statements\)\s+\d+.\d+%/'
+  only:
+    - merge_requests

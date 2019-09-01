@@ -1,0 +1,32 @@
+concurrent = 20
+check_interval = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "229 p2shop golang"
+  url = "https://gitlab.p2shop.cn:8443/"
+  token = "******"
+  executor = "docker"
+  cache_dir = "/builds/cache"
+  environment = ["DOCKER_AUTH_CONFIG={\"auths\": {\"registry.elandsystems.cn:5000\": {\"auth\": \"******\"},\"registry.p2shop.com.cn\": {\"auth\": \"******\"}}}"]
+  [runners.custom_build_dir]
+    enabled = true
+  [runners.docker]
+    tls_verify = false
+    image = "docker:19.03.1"
+    dns = ["8.8.8.8"]
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = true
+    volumes = ["/home/xiao.xinmiao/images/rtc:/builds/cache/rtc", "/cache"]
+    shm_size = 0
+    [runners.docker.sysctls]
+      "net.ipv4.ip_forward" = "1"
+  [runners.cache]
+    [runners.cache.s3]
+    [runners.cache.gcs]
+  [runners.custom]
+    run_exec = ""

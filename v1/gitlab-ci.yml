@@ -1,0 +1,61 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  SERVICE_NAME: go-api-test1 #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
+  FOLDERNAME: ""  #for example: nomni/
+  GITLABWITCH: "-c msl" # msl srx srx-msl, for example: srx-msl:git on  srx,images in https://ci.p2shop.com.cn
+  WORKDIR: $FOLDERNAME$CI_PROJECT_NAME
+  TAG: golang:builder-beta
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+  PRIVATE_REGISTRY: registry.elandsystems.cn:5000
+  P2SHOP_REGISTRY: registry.p2shop.com.cn
+  PANGPANG_GOBUILDER: $PRIVATE_REGISTRY/golang:builder-beta
+before_script:
+  - docker info
+  - docker login -u eland -p 1234 $PRIVATE_REGISTRY
+  - docker login -u eland -p ****** $P2SHOP_REGISTRY
+image:
+  name: $PRIVATE_REGISTRY/compose:1.24.1
+  entrypoint: [""]
+services:
+  - name: $PRIVATE_REGISTRY/docker:19.03.1-dind
+    command: ["--insecure-registry=registry.elandsystems.cn:5000"]
+    alias: docker
+  
+stages:
+  # - build
+  - unit-test
+# job1:
+#   stage: build
+#   tags:
+#     - golang
+#   script:
+#    - >
+#      docker run  --rm -v $(pwd):/go/src/$WORKDIR -w  /go/src/$WORKDIR $PANGPANG_GOBUILDER
+#      bash -c 'git -C $GOPATH/src/github.com/pangpanglabs/echoswagger pull  &&
+#      go get -v -d && go build'
+#   only:
+#     - merge_requests
+job2:
+  stage: unit-test
+  #image: $PRIVATE_REGISTRY/golang:1.11-alpine3.10
+  tags:
+    - golang:builder-beta
+  script:
+   - docker create -it --name rtc $P2SHOP_REGISTRY/run-test-container-qa sh
+   - docker cp rtc:/go/bin/run-test-container $(pwd)
+   - docker rm -f rtc
+   - ./run-test-container run --deploy-mode  $SERVICE_NAME $GITLABWITCH --registry-common $PRIVATE_REGISTRY
+   - docker ps -a
+   - >
+     docker run --rm  --network=host -v /builds/go/src:/go/src -v $(pwd):/go/src/$WORKDIR -w /go/src/$WORKDIR
+     -e APP_ENV=
+     -e JWT_SECRET=1234
+     $PRIVATE_REGISTRY/golang:1.12
+     sh -c 'git -C $GOPATH/src/github.com/pangpanglabs/echoswagger pull  && 
+     go get -v -d && go build &&
+     go test -p 1 -count 1 -v -coverpkg=./... -coverprofile coverage.out ./... &&
+     go tool cover -func=coverage.out'
+  coverage: '/\(statements\)\s+\d+.\d+%/'
+  only:
+    - merge_requests

@@ -1,0 +1,53 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  SERVICE_NAME: go-api-test1 #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
+  FOLDERNAME: ""  #for example: nomni/
+  GITLABWITCH: "-c msl" # msl srx srx-msl,for example: srx-msl:git on srx,images in https://ci.p2shop.com.cn
+  PRIVATE_REGISTRY: registry.elandsystems.cn:5000
+  GO_REGISTRY: $PRIVATE_REGISTRY/golang:1.12
+  WORKDIR: $FOLDERNAME$CI_PROJECT_NAME
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+  P2SHOP_REGISTRY: registry.p2shop.com.cn
+  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+before_script:
+  - docker info
+  - docker login -u eland -p 1234 $PRIVATE_REGISTRY
+  - docker login -u eland -p ****** $P2SHOP_REGISTRY
+image:
+  name: $PRIVATE_REGISTRY/compose:1.24.1
+  entrypoint: [""]
+services:
+  - name: $PRIVATE_REGISTRY/docker:19.03.1-dind
+    command: ["--insecure-registry=registry.elandsystems.cn:5000"]
+    alias: docker
+  
+stages:
+  - build-test
+job2:
+  stage: build-test
+  tags:
+    - golang
+  script:
+   - pwd
+   - /builds/cache/rtc/run-test-container run --deploy-mode  $SERVICE_NAME $GITLABWITCH --registry-common $PRIVATE_REGISTRY
+   - docker ps -a
+   - cd ..
+   - docker cp test-$SERVICE_NAME:/go/bin/vendor $(pwd)/
+   - ls
+   - ls -R $(pwd)/vendor
+   - >
+     docker run --rm  --network=host 
+     -v $(pwd)/vendor:/go/src 
+     -v $(pwd)/$CI_PROJECT_NAME:/go/src/$WORKDIR 
+     -w /go/src/$WORKDIR
+     -e APP_ENV=
+     -e JWT_SECRET=1234
+     $GO_REGISTRY 
+     sh -c '
+     go build &&
+     go test -p 1 -count 1 -v -coverpkg=./... -coverprofile coverage.out ./... &&
+     go tool cover -func=coverage.out'
+  coverage: '/\(statements\)\s+\d+.\d+%/'
+  only:
+    - merge_requests

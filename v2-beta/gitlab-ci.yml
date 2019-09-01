@@ -1,0 +1,52 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  SERVICE_NAME: go-api-test1 #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
+  FOLDERNAME: ""  #for example: nomni/
+  GITLABWITCH: "msl" # msl srx srx-msl, for example: srx-msl:git on  srx,images in https://ci.p2shop.com.cn
+  PRIVATE_REGISTRY: registry.elandsystems.cn:5000
+  GO_REGISTRY: $PRIVATE_REGISTRY/golang:1.12-alpine
+  WORKDIR: $FOLDERNAME$CI_PROJECT_NAME
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+before_script:
+  - docker info
+  - docker login -u eland -p 1234 $PRIVATE_REGISTRY
+image:
+  name: $PRIVATE_REGISTRY/compose:1.24.1
+  entrypoint: [""]
+services:
+  - name: $PRIVATE_REGISTRY/docker:19.03.1-dind
+    command: ["--insecure-registry=registry.elandsystems.cn:5000"]
+    alias: docker
+  
+stages:
+  - build-test
+job2:
+  stage: build-test
+  tags:
+    - golang
+  script:
+    - >
+      /builds/cache/rtc/run-test-container run $SERVICE_NAME
+      --host-ip=$REGISTRY.ELANDSYSTEMS.CN__DOCKER_PORT_2376_TCP_ADDR
+      -c  $GITLABWITCH 
+      --registry-common $PRIVATE_REGISTRY
+    - docker ps -a
+    - >
+      docker run --rm  --network=host 
+      -v /builds/cache/go/src:/go/src
+      -v /builds/cache/swagger-ui:/swagger-ui
+      -v /builds/cache/swagger-ui-3.19.3:/swagger-ui-3.19.3 
+      -v $(pwd):/go/src/$WORKDIR -w /go/src/$WORKDIR
+      -e APP_ENV=
+      -e JWT_SECRET=1234
+      $GO_REGISTRY 
+      sh -c 'go get -v -d && 
+      go build &&
+      go test -p 1 -count 1 -v -coverpkg=./... -coverprofile coverage.out ./... &&
+      go tool cover -func=coverage.out'
+    - sleep 50m
+     
+  coverage: '/\(statements\)\s+\d+.\d+%/'
+  only:
+    - merge_requests
