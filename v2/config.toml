@@ -1,0 +1,44 @@
+# root@ubuntu229:~# cat /etc/gitlab-runner/config.toml
+
+concurrent = 20
+check_interval = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "229 p2shop golang test"
+  url = "https://gitlab.p2shop.cn:8443/"
+  token = "MWPBHW-XvZgyAYcGGrgx"
+  executor = "docker"
+  environment = ["DOCKER_AUTH_CONFIG={\"auths\": {\"registry.elandsystems.cn:5000\": {\"auth\": \"******\"},\"registry.p2shop.com.cn\": {\"auth\": \"******\"}}}"]
+  [runners.custom_build_dir]
+    enabled = true
+  [runners.docker]
+    tls_verify = false
+    image = "docker:19.03.1"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache"]
+    shm_size = 0
+  [runners.cache]
+    [runners.cache.s3]
+    [runners.cache.gcs]
+  [runners.custom]
+    run_exec = ""
+
+[[runners]]
+  name = "229 p2shop golang build"
+  url = "https://gitlab.p2shop.cn:8443/"
+  token = "5JzE15Jx2G5ziVyuL5pk"
+  executor = "shell"
+  environment = ["DOCKER_AUTH_CONFIG={\"auths\": {\"registry.elandsystems.cn:5000\": {\"auth\": \"******\"},\"registry.p2shop.com.cn\": {\"auth\": \"******\"}}}"]
+  [runners.custom_build_dir]
+    enabled = true
+  [runners.cache]
+    [runners.cache.s3]
+    [runners.cache.gcs]
+  [runners.custom]
+    run_exec = ""
