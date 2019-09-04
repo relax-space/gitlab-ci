@@ -19,7 +19,6 @@ build:
       -v $(pwd):/go/src/$WORKDIR
       -w /go/src/$WORKDIR
       -e CGO_ENABLED=0
-      -m 512M
       $GOBUILDER
       sh -c '
       go build && 
@@ -84,7 +83,6 @@ test:
      -v $(pwd)/vendor:/go/src 
      -v $(pwd)/$CI_PROJECT_NAME:/go/src/$WORKDIR 
      -w /go/src/$WORKDIR
-     -m 512M
      -e APP_ENV=
      -e JWT_SECRET=1234
      -e CGO_ENABLED=0
