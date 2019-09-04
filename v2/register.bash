@@ -18,9 +18,8 @@ sudo gitlab-runner register -n \
    --docker-image "docker:19.03.1" \
    --docker-privileged \
    --env "DOCKER_AUTH_CONFIG={\"auths\": {\"registry.elandsystems.cn:5000\": {\"auth\": \"******\"},\"registry.p2shop.com.cn\": {\"auth\": \"******\"}}}" \
-   --custom_build_dir-enabled=true  \
-   --docker-dns  "8.8.8.8" \
-   --docker-wait-for-services-timeout="300"
+   --custom_build_dir-enabled=true  
+ 
    
 # build
 
@@ -31,8 +30,7 @@ sudo gitlab-runner register -n \
    --executor shell \
    --env "DOCKER_AUTH_CONFIG={\"auths\": {\"registry.elandsystems.cn:5000\": {\"auth\": \"******\"},\"registry.p2shop.com.cn\": {\"auth\": \"******\"}}}" \
    --custom_build_dir-enabled=true  \
-   --description "229 p2shop golang build" \
-   --docker-dns  "8.8.8.8" \
-   --docker-wait-for-services-timeout="300"
+   --description "229 p2shop golang build" 
+   
 
     
