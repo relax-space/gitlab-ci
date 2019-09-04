@@ -1,3 +1,8 @@
+
+# 正式环境 用的是下面这句，而不是compose 
+   # docker run -d -p 5000:5000 --memory-reservation="64M" --restart=always --name registry registry
+
+
 version: '3'
 
 services:

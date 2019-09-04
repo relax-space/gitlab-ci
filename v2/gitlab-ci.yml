@@ -45,15 +45,17 @@ test:
     P2SHOP_REGISTRY: registry.p2shop.com.cn
     GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
     VENDOR_REGISTRY: $PRIVATE_REGISTRY/$CI_PROJECT_NAME-vendor
+    DOCKER_AUTH_CONFIG: '{"auths": {"registry.elandsystems.cn:5000": {"auth": "******"},"registry.p2shop.com.cn": {"auth": "******"}}}'
   before_script:
-    - docker login -u eland -p 1234 $PRIVATE_REGISTRY
-    - docker login -u eland -p ****** $P2SHOP_REGISTRY
+    - mkdir -p ~/.docker
+    - touch ~/.docker/config.json
+    - echo $DOCKER_AUTH_CONFIG >> ~/.docker/config.json
   image:
     name: $PRIVATE_REGISTRY/compose:1.24.1
     entrypoint: [""]
   services:
     - name: $PRIVATE_REGISTRY/docker:19.03.1-dind
-      command: ["--insecure-registry=registry.elandsystems.cn:5000"]
+      command: ["--insecure-registry=registry.elandsystems.cn:5000" ]
       alias: docker
   tags:
     - golang-test
