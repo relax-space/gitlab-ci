@@ -59,6 +59,17 @@ sudo gitlab-runner register -n \
 
 
 
+# docker download
+
+sudo gitlab-runner register -n \
+   --url https://gitlab.p2shop.cn:8443/ \
+   --registration-token ****** \
+   --tag-list "docker-download" \
+   --executor shell \
+   --description "229 docker-download" \
+   --docker-image "docker:19.03.1" \
+   --docker-privileged \
+   --env "DOCKER_AUTH_CONFIG={\"auths\": {\"registry.elandsystems.cn:5000\": {\"auth\": \"******\"},\"registry.p2shop.com.cn\": {\"auth\": \"******\"}}}"
    
 
     
