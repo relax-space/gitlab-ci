@@ -13,6 +13,8 @@ build:
   stage: build
   tags:
     - golang-build
+  after_script:
+    - GLOBIGNORE="vendor-${CI_COMMIT_REF_SLUG}"; rm -r *
   script:
     - >
       docker run --rm 
@@ -61,6 +63,8 @@ test:
       alias: docker
   tags:
     - golang-test
+  after_script:
+    - rm -f -r *
   script:
    # current pwd:/builds/0/xiao.xinmiao/go-api-test1/
    - cd ..
@@ -76,14 +80,15 @@ test:
      -c $GITLABWITCH 
      --registry-common $PRIVATE_REGISTRY
    # 2.make vendor file
-   - rm -f -r vendor
-   - mkdir -p vendor
-   - mv $(pwd)/$CI_PROJECT_NAME/vendor-$CI_COMMIT_REF_SLUG/* $(pwd)/vendor/  # for fix vendor issue: cannot find package "github.com/labstack/echo/v4"
+   - vendor="vendor-${CI_COMMIT_REF_SLUG}"
+   - rm -f -r $vendor
+   - mkdir -p $vendor
+   - mv $(pwd)/$CI_PROJECT_NAME/$vendor/* $(pwd)/$vendor/  # for fix vendor issue: cannot find package "github.com/labstack/echo/v4"
    - docker ps -a
    # 3. go build && test
    - >
      docker run --rm  --network=host 
-     -v $(pwd)/vendor:/go/src 
+     -v $(pwd)/$vendor:/go/src 
      -v $(pwd)/$CI_PROJECT_NAME:/go/src/$WORKDIR 
      -w /go/src/$WORKDIR
      -e APP_ENV=
