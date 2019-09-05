@@ -1,7 +1,7 @@
 variables:
   FOLDERNAME: ""  #for example: nomni/
   SERVICE_NAME: go-api #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
-  GITLABWITCH: "msl" # msl srx srx-msl,for example: srx-msl:git on https://gitlab.srxcloud.com and images in https://ci.p2shop.com.cn
+  GITLABWITCH: "p2shop" # p2shop srx srx-p2shop,for example: srx-p2shop:git on https://gitlab.srxcloud.com and images in https://ci.p2shop.com.cn
   GOBUILDER: pangpanglabs/golang:builder-beta
   WORKDIR: $FOLDERNAME$CI_PROJECT_NAME
   GOTEST_REGISTRY: golang:1.12-alpine
