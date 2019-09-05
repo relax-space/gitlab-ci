@@ -50,6 +50,7 @@ test:
     - touch ~/.docker/config.json
     - echo $DOCKER_AUTH_CONFIG >> ~/.docker/config.json
     - echo '10.202.101.22 gitlab.p2shop.cn' >> /etc/hosts
+    - echo '${DOCKER_PORT_2375_TCP_ADDR} test-kafka' >> /etc/hosts
   image:
     name: $PRIVATE_REGISTRY/compose:1.24.1
     entrypoint: [""]
