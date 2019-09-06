@@ -1,3 +1,4 @@
+
 variables:
   FOLDERNAME: ""  #for example: nomni/
   SERVICE_NAME: go-api #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
@@ -59,22 +60,25 @@ test:
     entrypoint: [""]
   services:
     - name: $PRIVATE_REGISTRY/docker:19.03.1-dind
-      command: ["--insecure-registry=registry.elandsystems.cn:5000" ]
+      command: ["--insecure-registry=registry.elandsystems.cn:5000","--registry-mirror=https://dockerhub.azk8s.cn" ]
       alias: docker
   tags:
     - golang-test
   after_script:
     - rm -f -r *
+    - cd ..
+    - rm -f -r $CI_COMMIT_REF_SLUG
   script:
    # current pwd:/builds/0/xiao.xinmiao/go-api-test1/
    - cd ..
    # 1.run rtc
+   - mkdir -p $CI_COMMIT_REF_SLUG
    - docker create -it --name rtc $PRIVATE_REGISTRY/run-test-container-qa sh
-   - docker cp rtc:/go/bin/run-test-container $(pwd)
+   - docker cp rtc:/go/bin/run-test-container $(pwd)/$CI_COMMIT_REF_SLUG/
    - docker rm -f rtc
    - echo $DOCKER_PORT_2375_TCP_ADDR
    - >
-     ./run-test-container run $SERVICE_NAME  
+     ./$CI_COMMIT_REF_SLUG/run-test-container run $SERVICE_NAME  
      --no-login  
      --host-ip=$DOCKER_PORT_2375_TCP_ADDR
      -c $GITLABWITCH 
