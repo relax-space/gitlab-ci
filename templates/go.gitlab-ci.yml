@@ -69,7 +69,7 @@ test:
    # current pwd:/builds/0/xiao.xinmiao/go-api-test1/
    - cd ..
    # 1.run rtc
-   - docker create -it --name rtc $P2SHOP_REGISTRY/run-test-container-qa sh
+   - docker create -it --name rtc $PRIVATE_REGISTRY/run-test-container-qa sh
    - docker cp rtc:/go/bin/run-test-container $(pwd)
    - docker rm -f rtc
    - echo $DOCKER_PORT_2375_TCP_ADDR
