@@ -3,6 +3,12 @@ variables:
   FOLDERNAME: ""  #for example: nomni/
   SERVICE_NAME: go-api #for example: product-api-pangpang-brand from   https://gitlab.p2shop.cn:8443/data/rtc-data/blob/qa/config.qa.yml
   GITLABWITCH: "p2shop" # p2shop srx srx-p2shop,for example: srx-p2shop:git on https://gitlab.srxcloud.com and images in https://ci.p2shop.com.cn
+
+  URLGITLAB: ""
+  PRIVATETOKENGITLAB: ""
+  REGISTRY_P2SHOP_PWD: "******"
+  GITLAB_P2SHOP_PRIVATETOKEN: "******"
+  GITLAB_SRX_PRIVATETOKEN: "******"
   GOBUILDER: pangpanglabs/golang:builder-beta
   WORKDIR: $FOLDERNAME$CI_PROJECT_NAME
   GOTEST_REGISTRY: golang:1.12-alpine
@@ -74,15 +80,17 @@ test:
    # 1.run rtc
    - mkdir -p $CI_COMMIT_REF_SLUG
    - docker create -it --name rtc $PRIVATE_REGISTRY/run-test-container-qa sh
-   - docker cp rtc:/go/bin/run-test-container $(pwd)/$CI_COMMIT_REF_SLUG/
+   - docker cp rtc:/go/bin/rtc $(pwd)/$CI_COMMIT_REF_SLUG/
    - docker rm -f rtc
    - echo $DOCKER_PORT_2375_TCP_ADDR
    - >
-     ./$CI_COMMIT_REF_SLUG/run-test-container run $SERVICE_NAME  
+     ./$CI_COMMIT_REF_SLUG/rtc run $SERVICE_NAME  
      --no-login  
      --host-ip=$DOCKER_PORT_2375_TCP_ADDR
      -c $GITLABWITCH 
-     --registry-common $PRIVATE_REGISTRY
+     --url-gitlab=$URLGITLAB
+     --private-token-gitlab=$PRIVATETOKENGITLAB
+     --registry-common=$PRIVATE_REGISTRY
    # 2.make vendor file
    - vendor="vendor-${CI_COMMIT_REF_SLUG}"
    - rm -f -r $vendor
